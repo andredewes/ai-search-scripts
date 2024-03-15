@@ -1,0 +1,399 @@
+@azureAccessToken = ey...
+
+# AI Search parameters
+@baseUrl = https://name.search.windows.net
+@indexName = index-prefix
+
+# Data source parameters
+@storageAccountConnectionString = DefaultEndpointsProtocol=https;AccountName=test;AccountKey=ggggg5mWt98yjYTl1n57n5YrVFIxPfTkFqpUOXrf85zy9egDAxg15LNk2rvfE+AStWdYhuw==;EndpointSuffix=core.windows.net
+@blobContainerName = container-name
+
+# OpenAI parameters
+@openAiUrl = https://xyz.openai.azure.com
+@embeddingDeploymentId = andre-embedding
+@openAiApiKey = 2e6e8fb51bac458dc6fc6a77bdaab843
+
+# AI Multi-service account -> check here if you don't know what is this: https://learn.microsoft.com/en-us/azure/ai-services/multi-service-resource
+@multiserviceAccountApiKey = 4784a8f18d2f42a2a9e3bb06befcb5ed
+
+### Create the Data Source
+
+POST {{baseUrl}}/datasources?api-version=2023-10-01-Preview
+Content-type: application/json
+Authorization: Bearer {{azureAccessToken}}
+
+{
+    "container": {
+        "name": "{{blobContainerName}}"
+    },
+    "credentials": {
+        "connectionString": "{{storageAccountConnectionString}}"
+    },
+    "dataDeletionDetectionPolicy": {
+        "@odata.type": "#Microsoft.Azure.Search.NativeBlobSoftDeleteDeletionDetectionPolicy"
+    },
+    "name": "{{indexName}}-datasource",
+    "type": "azureblob"
+}
+
+### Create the index
+
+POST {{baseUrl}}/indexes?api-version=2023-10-01-Preview
+Content-type: application/json
+Authorization: Bearer {{azureAccessToken}}
+
+{
+    "name": "{{indexName}}",
+    "defaultScoringProfile": null,
+    "fields": [
+        {
+            "name": "chunk_id",
+            "type": "Edm.String",
+            "searchable": true,
+            "filterable": true,
+            "retrievable": true,
+            "sortable": true,
+            "facetable": true,
+            "key": true,
+            "indexAnalyzer": null,
+            "searchAnalyzer": null,
+            "analyzer": "keyword",
+            "normalizer": null,
+            "dimensions": null,
+            "vectorSearchProfile": null,
+            "synonymMaps": []
+        },
+        {
+            "name": "parent_id",
+            "type": "Edm.String",
+            "searchable": true,
+            "filterable": true,
+            "retrievable": true,
+            "sortable": true,
+            "facetable": true,
+            "key": false,
+            "indexAnalyzer": null,
+            "searchAnalyzer": null,
+            "analyzer": null,
+            "normalizer": null,
+            "dimensions": null,
+            "vectorSearchProfile": null,
+            "synonymMaps": []
+        },
+        {
+            "name": "chunk",
+            "type": "Edm.String",
+            "searchable": true,
+            "filterable": false,
+            "retrievable": true,
+            "sortable": false,
+            "facetable": false,
+            "key": false,
+            "indexAnalyzer": null,
+            "searchAnalyzer": null,
+            "analyzer": null,
+            "normalizer": null,
+            "dimensions": null,
+            "vectorSearchProfile": null,
+            "synonymMaps": []
+        },
+        {
+            "name": "title",
+            "type": "Edm.String",
+            "searchable": true,
+            "filterable": true,
+            "retrievable": true,
+            "sortable": false,
+            "facetable": false,
+            "key": false,
+            "indexAnalyzer": null,
+            "searchAnalyzer": null,
+            "analyzer": null,
+            "normalizer": null,
+            "dimensions": null,
+            "vectorSearchProfile": null,
+            "synonymMaps": []
+        },
+        {
+            "name": "vector",
+            "type": "Collection(Edm.Single)",
+            "searchable": true,
+            "filterable": false,
+            "retrievable": true,
+            "sortable": false,
+            "facetable": false,
+            "key": false,
+            "indexAnalyzer": null,
+            "searchAnalyzer": null,
+            "analyzer": null,
+            "normalizer": null,
+            "dimensions": 1536,
+            "vectorSearchProfile": "{{indexName}}-profile",
+            "synonymMaps": []
+        }
+    ],
+    "scoringProfiles": [],
+    "corsOptions": null,
+    "suggesters": [],
+    "analyzers": [],
+    "normalizers": [],
+    "tokenizers": [],
+    "tokenFilters": [],
+    "charFilters": [],
+    "encryptionKey": null,
+    "similarity": {
+        "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
+        "k1": null,
+        "b": null
+    },
+    "semantic": {
+        "defaultConfiguration": "{{indexName}}-semantic-configuration",
+        "configurations": [
+            {
+                "name": "{{indexName}}-semantic-configuration",
+                "prioritizedFields": {
+                    "titleField": {
+                        "fieldName": "title"
+                    },
+                    "prioritizedContentFields": [
+                        {
+                            "fieldName": "chunk"
+                        }
+                    ],
+                    "prioritizedKeywordsFields": []
+                }
+            }
+        ]
+    },
+    "vectorSearch": {
+        "algorithms": [
+            {
+                "name": "{{indexName}}-algorithm",
+                "kind": "hnsw",
+                "hnswParameters": {
+                    "metric": "cosine",
+                    "m": 4,
+                    "efConstruction": 400,
+                    "efSearch": 500
+                },
+                "exhaustiveKnnParameters": null
+            }
+        ],
+        "profiles": [
+            {
+                "name": "{{indexName}}-profile",
+                "algorithm": "{{indexName}}-algorithm",
+                "vectorizer": "{{indexName}}-vectorizer"
+            }
+        ],
+        "vectorizers": [
+            {
+                "name": "{{indexName}}-vectorizer",
+                "kind": "azureOpenAI",
+                "azureOpenAIParameters": {
+                    "resourceUri": "{{openAiUrl}}",
+                    "deploymentId": "{{embeddingDeploymentId}}",
+                    "apiKey": "{{openAiApiKey}}",
+                    "authIdentity": null
+                },
+                "customWebApiParameters": null
+            }
+        ]
+    }
+}
+
+### Create the skillset
+
+POST {{baseUrl}}/skillsets?api-version=2023-10-01-Preview
+content-type: application/json
+Authorization: Bearer {{azureAccessToken}}
+
+{
+    "name": "{{indexName}}-skillset",
+    "description": "Skillset to chunk documents and generate embeddings",
+    "skills": [
+        {
+            "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
+            "name": null,
+            "description": null,
+            "context": "/document/pages/*",
+            "resourceUri": "{{openAiUrl}}",
+            "apiKey": "{{openAiApiKey}}",
+            "deploymentId": "{{embeddingDeploymentId}}",
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/pages/*",
+                    "sourceContext": null,
+                    "inputs": []
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "embedding",
+                    "targetName": "vector"
+                }
+            ],
+            "authIdentity": null
+        },
+        {
+            "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
+            "name": null,
+            "description": "Split skill to chunk documents",
+            "context": "/document",
+            "defaultLanguageCode": null,
+            "textSplitMode": "pages",
+            "maximumPageLength": 2000,
+            "pageOverlapLength": 500,
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/mergedText",
+                    "sourceContext": null,
+                    "inputs": []
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "textItems",
+                    "targetName": "pages"
+                }
+            ]
+        },
+        {
+            "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
+            "name": null,
+            "description": null,
+            "context": "/document",
+            "insertPreTag": null,
+            "insertPostTag": null,
+            "inputs": [
+                {
+                    "name": "text",
+                    "source": "/document/content",
+                    "sourceContext": null,
+                    "inputs": []
+                },
+                {
+                    "name": "itemsToInsert",
+                    "source": "/document/normalized_images/*/text",
+                    "sourceContext": null,
+                    "inputs": []
+                },
+                {
+                    "name": "offsets",
+                    "source": "/document/normalized_images/*/contentOffset",
+                    "sourceContext": null,
+                    "inputs": []
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "mergedText",
+                    "targetName": "mergedText"
+                }
+            ]
+        },
+        {
+            "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
+            "name": null,
+            "description": null,
+            "context": "/document/normalized_images/*",
+            "textExtractionAlgorithm": null,
+            "lineEnding": null,
+            "defaultLanguageCode": null,
+            "detectOrientation": true,
+            "inputs": [
+                {
+                    "name": "image",
+                    "source": "/document/normalized_images/*",
+                    "sourceContext": null,
+                    "inputs": []
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "text",
+                    "targetName": "text"
+                }
+            ]
+        }
+    ],
+    "cognitiveServices": {
+        "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+        "description": null,
+        "key": "{{multiserviceAccountApiKey}}"
+    },
+    "knowledgeStore": null,
+    "indexProjections": {
+        "selectors": [
+            {
+                "targetIndexName": "vector-debug-test",
+                "parentKeyFieldName": "parent_id",
+                "sourceContext": "/document/pages/*",
+                "mappings": [
+                    {
+                        "name": "chunk",
+                        "source": "/document/pages/*",
+                        "sourceContext": null,
+                        "inputs": []
+                    },
+                    {
+                        "name": "vector",
+                        "source": "/document/pages/*/vector",
+                        "sourceContext": null,
+                        "inputs": []
+                    },
+                    {
+                        "name": "title",
+                        "source": "/document/metadata_storage_name",
+                        "sourceContext": null,
+                        "inputs": []
+                    }
+                ]
+            }
+        ],
+        "parameters": {
+            "projectionMode": "skipIndexingParentDocuments"
+        }
+    },
+    "encryptionKey": null
+}
+
+### Create the indexer
+
+POST {{baseUrl}}/indexers?api-version=2023-10-01-Preview
+content-type: application/json
+Authorization: Bearer {{azureAccessToken}}
+
+{
+    "name": "{{indexName}}-indexer",
+    "description": null,
+    "dataSourceName": "{{indexName}}-datasource",
+    "skillsetName": "{{indexName}}-skillset",
+    "targetIndexName": "{{indexName}}",
+    "disabled": null,
+    "schedule": null,
+    "parameters": {
+        "batchSize": null,
+        "maxFailedItems": null,
+        "maxFailedItemsPerBatch": null,
+        "base64EncodeKeys": null,
+        "configuration": {
+            "dataToExtract": "contentAndMetadata",
+            "parsingMode": "default",
+            "imageAction": "generateNormalizedImages"
+        }
+    },
+    "fieldMappings": [
+        {
+            "sourceFieldName": "metadata_storage_name",
+            "targetFieldName": "title",
+            "mappingFunction": null
+        }
+    ],
+    "outputFieldMappings": [],
+    "cache": null,
+    "encryptionKey": null
+}
+

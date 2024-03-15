@@ -1,0 +1,1 @@
+# Useful HTTP scripts to manage Azure AI Search
