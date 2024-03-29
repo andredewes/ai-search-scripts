@@ -4,7 +4,7 @@ This repository aims to provide some Python script files and functions (which yo
 
 ## Pre-requisites
 
-- Visual Studio Code Phyton extensions
+- Visual Studio Code with Phyton extensions
 
 ## Usage
 
