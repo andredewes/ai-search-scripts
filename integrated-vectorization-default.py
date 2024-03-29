@@ -1,156 +1,161 @@
-@azureAccessToken = ey...
+import requests
+import json
+
+azureAccessToken = "eyJ0eXAiOiJKV1QiLCJhbG..."
 
 # AI Search parameters
-@baseUrl = https://name.search.windows.net
-@indexName = index-prefix
+baseUrl = "https://andre.search.windows.net"
+indexName = "test-python7"
 
 # Data source parameters
-@storageAccountConnectionString = DefaultEndpointsProtocol=https;AccountName=test;AccountKey=ggggg5mWt98yjYTl1n57n5YrVFIxPfTkFqpUOXrf85zy9egDAxg15LNk2rvfE+AStWdYhuw==;EndpointSuffix=core.windows.net
-@blobContainerName = container-name
+storageAccountConnectionString = "DefaultEndpointsProtocol..."
+blobContainerName = "container-name"
 
 # OpenAI parameters
-@openAiUrl = https://xyz.openai.azure.com
-@embeddingDeploymentId = andre-embedding
-@openAiApiKey = 2e6e8fb51bac458dc6fc6a77bdaab843
+openAiUrl = "https://xyz.openai.azure.com"
+embeddingDeploymentId = "andre-embedding"
+openAiApiKey = "2e6e8..."
 
 # AI Multi-service account -> check here if you don't know what is this: https://learn.microsoft.com/en-us/azure/ai-services/multi-service-resource
-@multiserviceAccountApiKey = 4784a8f18d2f42a2a9e3bb06befcb5ed
+multiserviceAccountApiKey = "4784a8f18d2f42a2..."
 
-### Create the Data Source
+headers = {"Content-Type": "application/json", "Authorization" : "Bearer " + azureAccessToken}
 
-POST {{baseUrl}}/datasources?api-version=2023-10-01-Preview
-Content-type: application/json
-Authorization: Bearer {{azureAccessToken}}
+### Create the Data Source ###
 
-{
+datasourceRequest = {
     "container": {
-        "name": "{{blobContainerName}}"
+        "name": blobContainerName
     },
     "credentials": {
-        "connectionString": "{{storageAccountConnectionString}}"
+        "connectionString": storageAccountConnectionString
     },
     "dataDeletionDetectionPolicy": {
         "@odata.type": "#Microsoft.Azure.Search.NativeBlobSoftDeleteDeletionDetectionPolicy"
     },
-    "name": "{{indexName}}-datasource",
+    "name":  f'{indexName}-datasource',
     "type": "azureblob"
 }
 
-### Create the index
+response = requests.post(f'{baseUrl}/datasources?api-version=2023-10-01-Preview', headers=headers, data=json.dumps(datasourceRequest))
 
-POST {{baseUrl}}/indexes?api-version=2023-10-01-Preview
-Content-type: application/json
-Authorization: Bearer {{azureAccessToken}}
+if response.status_code == 200 or response.status_code == 201:
+    print("Data source created!")
+else:
+    print(response.text)
+    raise Exception("Data source request failed")
 
-{
-    "name": "{{indexName}}",
-    "defaultScoringProfile": null,
+### Create the Index ###
+
+indexRequest = {
+    "name": indexName,
+    "defaultScoringProfile": None,
     "fields": [
         {
             "name": "chunk_id",
             "type": "Edm.String",
-            "searchable": true,
-            "filterable": true,
-            "retrievable": true,
-            "sortable": true,
-            "facetable": true,
-            "key": true,
-            "indexAnalyzer": null,
-            "searchAnalyzer": null,
+            "searchable": True,
+            "filterable": True,
+            "retrievable": True,
+            "sortable": True,
+            "facetable": True,
+            "key": True,
+            "indexAnalyzer": None,
+            "searchAnalyzer": None,
             "analyzer": "keyword",
-            "normalizer": null,
-            "dimensions": null,
-            "vectorSearchProfile": null,
+            "normalizer": None,
+            "dimensions": None,
+            "vectorSearchProfile": None,
             "synonymMaps": []
         },
         {
             "name": "parent_id",
             "type": "Edm.String",
-            "searchable": true,
-            "filterable": true,
-            "retrievable": true,
-            "sortable": true,
-            "facetable": true,
-            "key": false,
-            "indexAnalyzer": null,
-            "searchAnalyzer": null,
-            "analyzer": null,
-            "normalizer": null,
-            "dimensions": null,
-            "vectorSearchProfile": null,
+            "searchable": True,
+            "filterable": True,
+            "retrievable": True,
+            "sortable": True,
+            "facetable": True,
+            "key": False,
+            "indexAnalyzer": None,
+            "searchAnalyzer": None,
+            "analyzer": None,
+            "normalizer": None,
+            "dimensions": None,
+            "vectorSearchProfile": None,
             "synonymMaps": []
         },
         {
             "name": "chunk",
             "type": "Edm.String",
-            "searchable": true,
-            "filterable": false,
-            "retrievable": true,
-            "sortable": false,
-            "facetable": false,
-            "key": false,
-            "indexAnalyzer": null,
-            "searchAnalyzer": null,
-            "analyzer": null,
-            "normalizer": null,
-            "dimensions": null,
-            "vectorSearchProfile": null,
+            "searchable": True,
+            "filterable": True,
+            "retrievable": True,
+            "sortable": False,
+            "facetable": False,
+            "key": False,
+            "indexAnalyzer": None,
+            "searchAnalyzer": None,
+            "analyzer": None,
+            "normalizer": None,
+            "dimensions": None,
+            "vectorSearchProfile": None,
             "synonymMaps": []
         },
         {
             "name": "title",
             "type": "Edm.String",
-            "searchable": true,
-            "filterable": true,
-            "retrievable": true,
-            "sortable": false,
-            "facetable": false,
-            "key": false,
-            "indexAnalyzer": null,
-            "searchAnalyzer": null,
-            "analyzer": null,
-            "normalizer": null,
-            "dimensions": null,
-            "vectorSearchProfile": null,
+            "searchable": True,
+            "filterable": True,
+            "retrievable": True,
+            "sortable": False,
+            "facetable": False,
+            "key": False,
+            "indexAnalyzer": None,
+            "searchAnalyzer": None,
+            "analyzer": None,
+            "normalizer": None,
+            "dimensions": None,
+            "vectorSearchProfile": None,
             "synonymMaps": []
         },
         {
             "name": "vector",
             "type": "Collection(Edm.Single)",
-            "searchable": true,
-            "filterable": false,
-            "retrievable": true,
-            "sortable": false,
-            "facetable": false,
-            "key": false,
-            "indexAnalyzer": null,
-            "searchAnalyzer": null,
-            "analyzer": null,
-            "normalizer": null,
+            "searchable": True,
+            "filterable": False,
+            "retrievable": True,
+            "sortable": False,
+            "facetable": False,
+            "key": False,
+            "indexAnalyzer": None,
+            "searchAnalyzer": None,
+            "analyzer": None,
+            "normalizer": None,
             "dimensions": 1536,
-            "vectorSearchProfile": "{{indexName}}-profile",
+            "vectorSearchProfile": f'{indexName}-profile',
             "synonymMaps": []
         }
     ],
     "scoringProfiles": [],
-    "corsOptions": null,
+    "corsOptions": None,
     "suggesters": [],
     "analyzers": [],
     "normalizers": [],
     "tokenizers": [],
     "tokenFilters": [],
     "charFilters": [],
-    "encryptionKey": null,
+    "encryptionKey": None,
     "similarity": {
         "@odata.type": "#Microsoft.Azure.Search.BM25Similarity",
-        "k1": null,
-        "b": null
+        "k1": None,
+        "b": None
     },
     "semantic": {
-        "defaultConfiguration": "{{indexName}}-semantic-configuration",
+        "defaultConfiguration": f'{indexName}-semantic-configuration',
         "configurations": [
             {
-                "name": "{{indexName}}-semantic-configuration",
+                "name": f'{indexName}-semantic-configuration',
                 "prioritizedFields": {
                     "titleField": {
                         "fieldName": "title"
@@ -168,7 +173,7 @@ Authorization: Bearer {{azureAccessToken}}
     "vectorSearch": {
         "algorithms": [
             {
-                "name": "{{indexName}}-algorithm",
+                "name": f'{indexName}-algorithm',
                 "kind": "hnsw",
                 "hnswParameters": {
                     "metric": "cosine",
@@ -176,55 +181,60 @@ Authorization: Bearer {{azureAccessToken}}
                     "efConstruction": 400,
                     "efSearch": 500
                 },
-                "exhaustiveKnnParameters": null
+                "exhaustiveKnnParameters": None
             }
         ],
         "profiles": [
             {
-                "name": "{{indexName}}-profile",
-                "algorithm": "{{indexName}}-algorithm",
-                "vectorizer": "{{indexName}}-vectorizer"
+                "name": f'{indexName}-profile',
+                "algorithm": f'{indexName}-algorithm',
+                "vectorizer": f'{indexName}-vectorizer'
             }
         ],
         "vectorizers": [
             {
-                "name": "{{indexName}}-vectorizer",
+                "name": f'{indexName}-vectorizer',
                 "kind": "azureOpenAI",
                 "azureOpenAIParameters": {
-                    "resourceUri": "{{openAiUrl}}",
-                    "deploymentId": "{{embeddingDeploymentId}}",
-                    "apiKey": "{{openAiApiKey}}",
-                    "authIdentity": null
+                    "resourceUri": openAiUrl,
+                    "deploymentId": embeddingDeploymentId,
+                    "apiKey": openAiApiKey,
+                    "authIdentity": None
                 },
-                "customWebApiParameters": null
+                "customWebApiParameters": None
             }
         ]
     }
 }
 
-### Create the skillset
+response = requests.post(f'{baseUrl}/indexes?api-version=2023-10-01-Preview', headers=headers, data=json.dumps(indexRequest))
 
-POST {{baseUrl}}/skillsets?api-version=2023-10-01-Preview
-content-type: application/json
-Authorization: Bearer {{azureAccessToken}}
+if response.status_code == 200 or response.status_code == 201:
+    print("Index created!")
+else:
+    print(response.text)
+    raise Exception("Index request failed")
 
-{
-    "name": "{{indexName}}-skillset",
+
+### Create the Skillset ###
+
+skillsetRequest = {
+    "name": f'{indexName}-skillset',
     "description": "Skillset to chunk documents and generate embeddings",
     "skills": [
         {
             "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
-            "name": null,
-            "description": null,
+            "name": None,
+            "description": None,
             "context": "/document/pages/*",
-            "resourceUri": "{{openAiUrl}}",
-            "apiKey": "{{openAiApiKey}}",
-            "deploymentId": "{{embeddingDeploymentId}}",
+            "resourceUri": openAiUrl,
+            "apiKey": openAiApiKey,
+            "deploymentId": embeddingDeploymentId,
             "inputs": [
                 {
                     "name": "text",
                     "source": "/document/pages/*",
-                    "sourceContext": null,
+                    "sourceContext": None,
                     "inputs": []
                 }
             ],
@@ -234,14 +244,14 @@ Authorization: Bearer {{azureAccessToken}}
                     "targetName": "vector"
                 }
             ],
-            "authIdentity": null
+            "authIdentity": None
         },
         {
             "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
-            "name": null,
+            "name": None,
             "description": "Split skill to chunk documents",
             "context": "/document",
-            "defaultLanguageCode": null,
+            "defaultLanguageCode": None,
             "textSplitMode": "pages",
             "maximumPageLength": 2000,
             "pageOverlapLength": 500,
@@ -249,7 +259,7 @@ Authorization: Bearer {{azureAccessToken}}
                 {
                     "name": "text",
                     "source": "/document/mergedText",
-                    "sourceContext": null,
+                    "sourceContext": None,
                     "inputs": []
                 }
             ],
@@ -262,28 +272,28 @@ Authorization: Bearer {{azureAccessToken}}
         },
         {
             "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
-            "name": null,
-            "description": null,
+            "name": None,
+            "description": None,
             "context": "/document",
-            "insertPreTag": null,
-            "insertPostTag": null,
+            "insertPreTag": None,
+            "insertPostTag": None,
             "inputs": [
                 {
                     "name": "text",
                     "source": "/document/content",
-                    "sourceContext": null,
+                    "sourceContext": None,
                     "inputs": []
                 },
                 {
                     "name": "itemsToInsert",
                     "source": "/document/normalized_images/*/text",
-                    "sourceContext": null,
+                    "sourceContext": None,
                     "inputs": []
                 },
                 {
                     "name": "offsets",
                     "source": "/document/normalized_images/*/contentOffset",
-                    "sourceContext": null,
+                    "sourceContext": None,
                     "inputs": []
                 }
             ],
@@ -296,18 +306,18 @@ Authorization: Bearer {{azureAccessToken}}
         },
         {
             "@odata.type": "#Microsoft.Skills.Vision.OcrSkill",
-            "name": null,
-            "description": null,
+            "name": None,
+            "description": None,
             "context": "/document/normalized_images/*",
-            "textExtractionAlgorithm": null,
-            "lineEnding": null,
-            "defaultLanguageCode": null,
-            "detectOrientation": true,
+            "textExtractionAlgorithm": None,
+            "lineEnding": None,
+            "defaultLanguageCode": None,
+            "detectOrientation": True,
             "inputs": [
                 {
                     "name": "image",
                     "source": "/document/normalized_images/*",
-                    "sourceContext": null,
+                    "sourceContext": None,
                     "inputs": []
                 }
             ],
@@ -321,10 +331,10 @@ Authorization: Bearer {{azureAccessToken}}
     ],
     "cognitiveServices": {
         "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
-        "description": null,
-        "key": "{{multiserviceAccountApiKey}}"
+        "description": None,
+        "key": multiserviceAccountApiKey
     },
-    "knowledgeStore": null,
+    "knowledgeStore": None,
     "indexProjections": {
         "selectors": [
             {
@@ -335,19 +345,19 @@ Authorization: Bearer {{azureAccessToken}}
                     {
                         "name": "chunk",
                         "source": "/document/pages/*",
-                        "sourceContext": null,
+                        "sourceContext": None,
                         "inputs": []
                     },
                     {
                         "name": "vector",
                         "source": "/document/pages/*/vector",
-                        "sourceContext": null,
+                        "sourceContext": None,
                         "inputs": []
                     },
                     {
                         "name": "title",
                         "source": "/document/metadata_storage_name",
-                        "sourceContext": null,
+                        "sourceContext": None,
                         "inputs": []
                     }
                 ]
@@ -357,28 +367,32 @@ Authorization: Bearer {{azureAccessToken}}
             "projectionMode": "skipIndexingParentDocuments"
         }
     },
-    "encryptionKey": null
+    "encryptionKey": None
 }
 
-### Create the indexer
+response = requests.post(f'{baseUrl}/skillsets?api-version=2023-10-01-Preview', headers=headers, data=json.dumps(skillsetRequest))
 
-POST {{baseUrl}}/indexers?api-version=2023-10-01-Preview
-content-type: application/json
-Authorization: Bearer {{azureAccessToken}}
+if response.status_code == 200 or response.status_code == 201:
+    print("Skillset created!")
+else:
+    print(response.text)
+    raise Exception("Skillset request failed")
 
-{
-    "name": "{{indexName}}-indexer",
-    "description": null,
-    "dataSourceName": "{{indexName}}-datasource",
-    "skillsetName": "{{indexName}}-skillset",
-    "targetIndexName": "{{indexName}}",
-    "disabled": null,
-    "schedule": null,
+### Create the Indexer ###
+
+indexerRequest = {
+    "name": f'{indexName}-indexer',
+    "description": None,
+    "dataSourceName": f'{indexName}-datasource',
+    "skillsetName": f'{indexName}-skillset',
+    "targetIndexName": indexName,
+    "disabled": None,
+    "schedule": None,
     "parameters": {
-        "batchSize": null,
-        "maxFailedItems": null,
-        "maxFailedItemsPerBatch": null,
-        "base64EncodeKeys": null,
+        "batchSize": None,
+        "maxFailedItems": None,
+        "maxFailedItemsPerBatch": None,
+        "base64EncodeKeys": None,
         "configuration": {
             "dataToExtract": "contentAndMetadata",
             "parsingMode": "default",
@@ -389,11 +403,18 @@ Authorization: Bearer {{azureAccessToken}}
         {
             "sourceFieldName": "metadata_storage_name",
             "targetFieldName": "title",
-            "mappingFunction": null
+            "mappingFunction": None
         }
     ],
     "outputFieldMappings": [],
-    "cache": null,
-    "encryptionKey": null
+    "cache": None,
+    "encryptionKey": None
 }
 
+response = requests.post(f'{baseUrl}/indexers?api-version=2023-10-01-Preview', headers=headers, data=json.dumps(indexerRequest))
+
+if response.status_code == 200 or response.status_code == 201:
+    print("Indexer created!")
+else:
+    print(response.text)
+    raise Exception("Indexer request failed")

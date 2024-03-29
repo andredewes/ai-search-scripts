@@ -22,3 +22,4 @@ Then copy the ``accessToken`` value from the output. It should begins with ``ey.
 | Script                            | Description   |
 | ---                               | ---           | 
 | integrated-vectorization.http     |  This script replicates the same steps that happens when you run the [Integrated Vectorization](https://learn.microsoft.com/en-us/azure/search/search-get-started-portal-import-vectors) wizard. It is useful when you disable Public Access from the networking blade because the button from the portal is disabled in that scenario. It creates a Data Source, Index, Skillset and Indexer |
+| /azure-vision-ocr     |  This folder contains a Azure Function (Python 3.11) that will receive images from an AI Search skillset and submit them to Azure Vision OCR endpoint. This replaces the built-in OCR skill for scenarios where AI Search is in private networking (built-in AI skills don't work) |
