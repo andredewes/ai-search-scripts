@@ -1,0 +1,140 @@
+{
+    "@odata.context": "https://andre-search-basic.search.windows.net/$metadata#skillsets/$entity",
+    "@odata.etag": "\"0x8DC4E6EBAEA18BE\"",
+    "name": "vector-ocr-function-skillset",
+    "description": "Skillset to chunk documents and generate embeddings",
+    "skills": [
+      {
+        "@odata.type": "#Microsoft.Skills.Text.AzureOpenAIEmbeddingSkill",
+        "name": "#1",
+        "description": null,
+        "context": "/document/pages/*",
+        "resourceUri": "https://andre-openai.openai.azure.com",
+        "apiKey": "<redacted>",
+        "deploymentId": "andre-embedding",
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/pages/*"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "embedding",
+            "targetName": "vector"
+          }
+        ],
+        "authIdentity": null
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.SplitSkill",
+        "name": "#2",
+        "description": "Split skill to chunk documents",
+        "context": "/document",
+        "defaultLanguageCode": "en",
+        "textSplitMode": "pages",
+        "maximumPageLength": 2000,
+        "pageOverlapLength": 500,
+        "maximumPagesToTake": 0,
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/mergedText"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "textItems",
+            "targetName": "pages"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Text.MergeSkill",
+        "name": "#3",
+        "description": null,
+        "context": "/document",
+        "insertPreTag": " ",
+        "insertPostTag": " ",
+        "inputs": [
+          {
+            "name": "text",
+            "source": "/document/content"
+          },
+          {
+            "name": "itemsToInsert",
+            "source": "/document/normalized_images/*/text"
+          },
+          {
+            "name": "offsets",
+            "source": "/document/normalized_images/*/contentOffset"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "mergedText",
+            "targetName": "mergedText"
+          }
+        ]
+      },
+      {
+        "@odata.type": "#Microsoft.Skills.Custom.WebApiSkill",
+        "name": "#4",
+        "description": "Upload image data to custom OCR API",
+        "context": "/document/normalized_images/*",
+        "uri": "https://functionocr.azurewebsites.net/api/http_trigger?code=xxxx5UMBGzBVx0YbATyQ7lZ6e9WCwE8nZNk5IeI0iiAzFuTGMHPQ==",
+        "httpMethod": "POST",
+        "timeout": "PT30S",
+        "batchSize": 1,
+        "degreeOfParallelism": null,
+        "inputs": [
+          {
+            "name": "imageData",
+            "source": "/document/normalized_images/*/data"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "text",
+            "targetName": "text"
+          }
+        ],
+        "httpHeaders": {}
+      }
+    ],
+    "cognitiveServices": null,
+    "knowledgeStore": null,
+    "indexProjections": {
+      "selectors": [
+        {
+          "targetIndexName": "vector-ocr-function",
+          "parentKeyFieldName": "parent_id",
+          "sourceContext": "/document/pages/*",
+          "mappings": [
+            {
+              "name": "chunk",
+              "source": "/document/pages/*",
+              "sourceContext": null,
+              "inputs": []
+            },
+            {
+              "name": "vector",
+              "source": "/document/pages/*/vector",
+              "sourceContext": null,
+              "inputs": []
+            },
+            {
+              "name": "title",
+              "source": "/document/metadata_storage_name",
+              "sourceContext": null,
+              "inputs": []
+            }
+          ]
+        }
+      ],
+      "parameters": {
+        "projectionMode": "skipIndexingParentDocuments"
+      }
+    },
+    "encryptionKey": null
+  }
