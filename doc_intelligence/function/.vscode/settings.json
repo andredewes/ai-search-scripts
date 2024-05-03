@@ -1,5 +1,5 @@
 {
-    "azureFunctions.deploySubpath": "doc_intelligence\\function",
+    "azureFunctions.deploySubpath": ".",
     "azureFunctions.scmDoBuildDuringDeployment": true,
     "azureFunctions.pythonVenv": ".venv",
     "azureFunctions.projectLanguage": "Python",
